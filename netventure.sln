@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "netventure", "netventure.csproj", "{92D6FC4A-B2CC-F481-01DF-5C501B952897}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{92D6FC4A-B2CC-F481-01DF-5C501B952897}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{92D6FC4A-B2CC-F481-01DF-5C501B952897}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{92D6FC4A-B2CC-F481-01DF-5C501B952897}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{92D6FC4A-B2CC-F481-01DF-5C501B952897}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {734963DA-0714-4F60-A6E2-75D0BF936C26}
+	EndGlobalSection
+EndGlobal
