@@ -6,4 +6,6 @@ public class CrowdedExamsDb : DbContext
     {
     }
     public DbSet<User> Users { get; set; }
+    public DbSet<Institution> Institutions { get; set; }
+    public DbSet<Exam> Exams { get; set; }
 }

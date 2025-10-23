@@ -25,7 +25,9 @@ public class LoginController : ControllerBase
     private class LoginResponse
     {
         public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
         public string Institution { get; set; } = string.Empty;
+
     }
 
     private string GenerateJwtToken(User user)
@@ -52,7 +54,9 @@ public class LoginController : ControllerBase
         {
             Subject = new ClaimsIdentity(claims),
             Expires = expires,
-            SigningCredentials = creds
+            SigningCredentials = creds,
+            Issuer = _configuration["Jwt:Issuer"],
+            Audience = _configuration["Jwt:Audience"]
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -80,6 +84,13 @@ public class LoginController : ControllerBase
         return Redirect(websiteUrl);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> getAllInstitutions()
+    {
+        var items = _database.Institutions.ToListAsync();
+        return Ok(items);
+    }
+
     [HttpPost]
     public async Task<IActionResult> getLoggedIn([FromBody] User partialUser)
     {
@@ -102,6 +113,7 @@ public class LoginController : ControllerBase
 
         LoginResponse responsePayload = new LoginResponse();
         responsePayload.FirstName = user.FirstName;
+        responsePayload.LastName = user.LastName;
         responsePayload.Institution = user.Institution;
         return Ok(responsePayload);
     }
