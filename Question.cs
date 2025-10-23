@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 public class Question
 {
     public int ExamId { get; set; }
