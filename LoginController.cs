@@ -109,7 +109,13 @@ public class LoginController : ControllerBase
             return Unauthorized("Unverified email");
         }
         var token = GenerateJwtToken(user);
-        Response.Headers.Append("Authorization", $"Bearer {token}");
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+        };
+        Response.Cookies.Append("accessToken", token, cookieOptions);
 
         LoginResponse responsePayload = new LoginResponse();
         responsePayload.FirstName = user.FirstName;

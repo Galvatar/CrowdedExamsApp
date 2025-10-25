@@ -11,10 +11,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowMyFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000")
-                  .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .WithExposedHeaders("Authorization")
+            policy.WithOrigins("https://localhost:3000")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .WithExposedHeaders("Authorization")
                 .AllowCredentials();
         });
 });
@@ -32,8 +32,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
             ValidateAudience = true,
             ValidAudience = config["Jwt:Audience"],
-            
+
             ValidateLifetime = true,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                context.Token = context.Request.Cookies["accessToken"];
+                return Task.CompletedTask;
+            }
         };
     });
 

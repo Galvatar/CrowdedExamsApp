@@ -7,6 +7,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 [ApiController]
 [Route("api/exams")]
@@ -53,8 +55,13 @@ public class ExamController : ControllerBase
         public string? UserVote { get; set; } // The new attribute
     }
 
-    public class VoteUpdateDto {
+    public class VoteUpdateDto
+    {
         public string Vote { get; set; } = string.Empty;
+    }
+
+    public class CommentDto {
+        public string Text { get; set; } = string.Empty;
     }
 
     [HttpGet("create")]
@@ -156,21 +163,6 @@ public class ExamController : ControllerBase
         return Ok(examDto);
     }
 
-    [HttpGet("{id}/questions")]
-    public async Task<IActionResult> getExamQuestions(int id)
-    {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var user = await _database.Users.FirstOrDefaultAsync(t => t.Id == int.Parse(userId));
-        if (user == null)
-        {
-            return Unauthorized("No valid user");
-        }
-        var items = _database.Questions
-            .Where(e => e.ExamId == id)
-            .ToListAsync();
-        return Ok(items);
-    }
-
     [HttpPut("questions/{questionId}/solutions")]
     public async Task<IActionResult> newExamSolutions(int questionId, [FromBody] Solution solution)
     {
@@ -201,6 +193,39 @@ public class ExamController : ControllerBase
         return Created("", newSolution);
     }
 
+    [HttpPut("questions/{solutionId}/comments")]
+    public async Task<IActionResult> addComment(int solutionId, [FromBody] CommentDto text)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized("Invalid user identifier.");
+        }
+
+        var user = await _database.Users.FindAsync(userId);
+        if (user == null) {
+            return Unauthorized("Invalid user identifier.");
+        }
+
+
+        var solution = await _database.Solutions.FirstOrDefaultAsync(s => s.Id == solutionId);
+        if (solution == null)
+        {
+            return NotFound("No solution with that id");
+        }
+
+        Reply newReply = new Reply
+        {
+            SolutionId = solution.Id,
+            User = user.FirstName + " " + user.LastName,
+            UserId = user.Id,
+            Description = text.Text
+        };
+        solution.Replies.Add(newReply);
+        await _database.SaveChangesAsync();
+        return Created();
+    }
+    
     [HttpPatch("questions/{solutionId}/solutions")]
     public async Task<IActionResult> newVotes(int solutionId, [FromBody] VoteUpdateDto voteUpdate) {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
