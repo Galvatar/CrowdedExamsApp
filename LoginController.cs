@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -30,7 +29,14 @@ public class LoginController : ControllerBase
 
     }
 
-    private string GenerateJwtToken(User user)
+    public class LoginDto
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }
+    }
+
+    private string GenerateJwtToken(User user, Boolean doesExpire)
     {
         var claims = new List<Claim>
         {
@@ -48,17 +54,18 @@ public class LoginController : ControllerBase
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var expires = DateTime.UtcNow.AddHours(1);
-
+        var expires = DateTime.UtcNow.AddDays(30);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = expires,
             SigningCredentials = creds,
             Issuer = _configuration["Jwt:Issuer"],
             Audience = _configuration["Jwt:Audience"]
         };
-
+        if (doesExpire)
+        {
+            tokenDescriptor.Expires = expires;
+        }
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
@@ -66,7 +73,7 @@ public class LoginController : ControllerBase
     }
 
     [HttpGet("{emailToken}")]
-    public async Task<IActionResult> verifyEmail(String emailToken)
+    public async Task<IActionResult> verifyEmail(string emailToken)
     {
         String websiteUrl = "http://localhost:3000";
         var user = await _database.Users.FirstOrDefaultAsync(t => t.EmailVerificationToken == emailToken);
@@ -92,7 +99,7 @@ public class LoginController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> getLoggedIn([FromBody] User partialUser)
+    public async Task<IActionResult> getLoggedIn([FromBody] LoginDto partialUser)
     {
 
         if (string.IsNullOrWhiteSpace(partialUser.Email) || string.IsNullOrWhiteSpace(partialUser.Password))
@@ -108,13 +115,17 @@ public class LoginController : ControllerBase
         {
             return Unauthorized("Unverified email");
         }
-        var token = GenerateJwtToken(user);
+        var token = GenerateJwtToken(user, partialUser.RememberMe);
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Lax,
         };
+        if (partialUser.RememberMe)
+        {
+            cookieOptions.Expires = DateTime.UtcNow.AddDays(30);
+        }
         Response.Cookies.Append("accessToken", token, cookieOptions);
 
         LoginResponse responsePayload = new LoginResponse();
