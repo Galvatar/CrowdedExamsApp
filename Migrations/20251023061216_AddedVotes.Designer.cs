@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace netventure.Migrations
 {
     [DbContext(typeof(CrowdedExamsDb))]
-    partial class CrowdedExamsDbModelSnapshot : ModelSnapshot
+    [Migration("20251023061216_AddedVotes")]
+    partial class AddedVotes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.10");
@@ -193,29 +196,6 @@ namespace netventure.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("UserVote", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SolutionId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Vote")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("UserVotes");
-                });
-
             modelBuilder.Entity("Question", b =>
                 {
                     b.HasOne("Exam", "Exam")
@@ -249,17 +229,6 @@ namespace netventure.Migrations
                     b.Navigation("Question");
                 });
 
-            modelBuilder.Entity("UserVote", b =>
-                {
-                    b.HasOne("User", "User")
-                        .WithMany("Votes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Exam", b =>
                 {
                     b.Navigation("Questions");
@@ -273,11 +242,6 @@ namespace netventure.Migrations
             modelBuilder.Entity("Solution", b =>
                 {
                     b.Navigation("Replies");
-                });
-
-            modelBuilder.Entity("User", b =>
-                {
-                    b.Navigation("Votes");
                 });
 #pragma warning restore 612, 618
         }

@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 public class Question
 {
     public int ExamId { get; set; }
+    [JsonIgnore]
     public Exam Exam { get; set; } = new();
     public int Id { get; set; }
     public int Number { get; set; }

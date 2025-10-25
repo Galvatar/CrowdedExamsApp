@@ -11,4 +11,5 @@ public class CrowdedExamsDb : DbContext
     public DbSet<Question> Questions { get; set; }
     public DbSet<Solution> Solutions { get; set; }
     public DbSet<Reply> Replies { get; set; }
+    public DbSet<UserVote> UserVotes { get; set; }
 }
