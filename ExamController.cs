@@ -105,7 +105,7 @@ public class ExamController : ControllerBase
         {
             return Unauthorized("No valid user");
         }
-        var items = _database.Exams
+        var items = await _database.Exams
             .Where(e => e.Institution == user.Institution)
             .ToListAsync();
         return Ok(items);
