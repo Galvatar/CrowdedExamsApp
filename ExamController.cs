@@ -9,6 +9,10 @@ using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using UglyToad.PdfPig;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 
 [ApiController]
 [Route("api/exams")]
@@ -203,7 +207,8 @@ public class ExamController : ControllerBase
         }
 
         var user = await _database.Users.FindAsync(userId);
-        if (user == null) {
+        if (user == null)
+        {
             return Unauthorized("Invalid user identifier.");
         }
 
@@ -224,6 +229,51 @@ public class ExamController : ControllerBase
         solution.Replies.Add(newReply);
         await _database.SaveChangesAsync();
         return Created();
+    }
+
+    [HttpPost("parser")]
+    [Authorize(Roles = "Moderator")]
+    public async Task<IActionResult> parsePdf([FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file uploaded.");
+        }
+
+        string pdfText;
+        using (var memoryStream = new MemoryStream())
+        {
+            await file.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+            using (var pdf = PdfDocument.Open(memoryStream))
+            {
+                var textBuilder = new StringBuilder();
+                foreach (var page in pdf.GetPages())
+                {
+                    textBuilder.AppendLine(page.Text);
+                }
+                pdfText = textBuilder.ToString();
+            }
+        }
+
+        string llmResponse;
+        using (var httpClient = new HttpClient())
+        {
+            var requestBody = new
+            {
+                message = "From the following pdf of a test/exam return just the json for it in the form courseName, examName, difficulty: Easy | Medium | Hard, questions: [ id (the question number), text, points ] make sure that any subquestions or sub information for that question is also included in it.\n" + pdfText
+            };
+            var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            var response = await httpClient.PostAsync("https://apifreellm.com/api/chat?", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "LLM API call failed.");
+            }
+            var responseString = await response.Content.ReadAsStringAsync();
+            llmResponse = responseString;
+        }
+        return Ok(llmResponse);
     }
     
     [HttpPatch("questions/{solutionId}/solutions")]

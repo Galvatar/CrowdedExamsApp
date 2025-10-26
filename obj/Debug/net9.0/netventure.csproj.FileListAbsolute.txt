@@ -388,3 +388,8 @@
 /Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/BouncyCastle.Cryptography.dll
 /Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/MailKit.dll
 /Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/MimeKit.dll
+/Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/UglyToad.PdfPig.dll
+/Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/UglyToad.PdfPig.Core.dll
+/Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/UglyToad.PdfPig.Fonts.dll
+/Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/UglyToad.PdfPig.Tokenization.dll
+/Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/bin/Debug/net9.0/UglyToad.PdfPig.Tokens.dll

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("netventure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bb0ae1c72fc3293de943de8bb6e5f5800babfd8a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e24f803a0ccb355ba6ceb020ed51e035916ca83f")]
 [assembly: System.Reflection.AssemblyProductAttribute("netventure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("netventure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -75,20 +75,19 @@ public class LoginController : ControllerBase
     [HttpGet("{emailToken}")]
     public async Task<IActionResult> verifyEmail(string emailToken)
     {
-        String websiteUrl = "http://localhost:3000";
         var user = await _database.Users.FirstOrDefaultAsync(t => t.EmailVerificationToken == emailToken);
         if (user == null)
         {
-            return Redirect(websiteUrl);
+            return Unauthorized("Invalid token");
         }
         if (DateTime.UtcNow > user.VerificationTokenExpires)
         {
-            return Redirect(websiteUrl);
+            return Unauthorized("Time limit exceeded");
         }
         user.isEmailVerified = true;
         await _database.SaveChangesAsync();
 
-        return Redirect(websiteUrl);
+        return Ok();
     }
 
     [HttpGet]
@@ -155,7 +154,7 @@ public class LoginController : ControllerBase
         _database.Users.Add(user);
         await _database.SaveChangesAsync();
 
-        var verificationUrl = $"https://localhost:5044/api/login/{user.EmailVerificationToken}";
+        var verificationUrl = $"https://localhost:3000/?token={user.EmailVerificationToken}";
         var emailHtml = $@"
             <html>
             <body style='font-family: Arial, sans-serif;'>
