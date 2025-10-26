@@ -170,11 +170,17 @@ public class LoginController : ControllerBase
                 </p>
             </body>
             </html>";
+        var emailText = $@"Welcome to Crowded Exams!
+
+        Please verify your email by opening this link: {verificationUrl}
+
+        This link expires in 1 hour.";
 
         await _email.SendAsync(
             to: user.Email,
             subject: "Verify your email - Crowded Exams",
-            htmlBody: emailHtml
+            htmlBody: emailHtml,
+            plainTextBody: emailText
         );
 
         return NoContent();

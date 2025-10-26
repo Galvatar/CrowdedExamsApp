@@ -1,61 +1,37 @@
-using MailKit.Net.Smtp;
-using MailKit.Security;
-using MimeKit;
-using Microsoft.Extensions.Configuration;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 public interface IEmailSender
 {
-    Task SendAsync(
-        string to,
-        string subject,
-        string htmlBody,
-        string? plainTextBody = null,
-        CancellationToken ct = default);
+    Task SendAsync(string to, string subject, string htmlBody, string plainTextBody, CancellationToken ct = default);
 }
 
-public sealed class SmtpEmailSender : IEmailSender
+public class SendGridEmailSender : IEmailSender
 {
-    private readonly IConfiguration _config;
+    private readonly string _apiKey;
+    private readonly string _fromEmail;
+    private readonly string _fromName;
 
-    public SmtpEmailSender(IConfiguration config) => _config = config;
-
-    public async Task SendAsync(
-        string to,
-        string subject,
-        string htmlBody,
-        string? plainTextBody = null,
-        CancellationToken ct = default)
+    public SendGridEmailSender(IConfiguration config)
     {
-        var smtp = _config.GetSection("Smtp");
-        var host = smtp["Host"]!;
-        var port = int.Parse(smtp["Port"] ?? "587");
-        var user = smtp["User"];
-        var pass = smtp["Pass"];
-        var from = smtp["From"]!;
-        var fromName = smtp["FromName"] ?? from;
-        var useStartTls = bool.Parse(smtp["UseStartTls"] ?? "true");
+        _apiKey = config["SendGrid:ApiKey"] ?? throw new ArgumentNullException("SendGrid:ApiKey not configured");
+        _fromEmail = config["SendGrid:FromEmail"] ?? throw new ArgumentNullException("SendGrid:FromEmail not configured");
+        _fromName = config["SendGrid:FromName"] ?? "Crowded Exams";
+    }
 
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress(fromName, from));
-        message.To.Add(new MailboxAddress("", to));
-        message.Subject = subject;
-
-        var body = new BodyBuilder
+    public async Task SendAsync(string to, string subject, string htmlBody, string plainTextBody, CancellationToken ct = default)
+    {
+        var client = new SendGridClient(_apiKey);
+        var from = new EmailAddress(_fromEmail, _fromName);
+        var toAddress = new EmailAddress(to);
+        var msg = MailHelper.CreateSingleEmail(from, toAddress, subject, plainTextBody, htmlBody);
+        
+        var response = await client.SendEmailAsync(msg, ct);
+        
+        if (!response.IsSuccessStatusCode)
         {
-            HtmlBody = htmlBody,
-            TextBody = plainTextBody ?? "View this email in an HTML-capable client."
-        };
-        message.Body = body.ToMessageBody();
-
-        using var client = new SmtpClient();
-        var socketOptions = useStartTls ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto;
-
-        await client.ConnectAsync(host, port, socketOptions, ct);
-
-        if (!string.IsNullOrWhiteSpace(user))
-            await client.AuthenticateAsync(user, pass, ct);
-
-        await client.SendAsync(message, ct);
-        await client.DisconnectAsync(true, ct);
+            var body = await response.Body.ReadAsStringAsync(ct);
+            throw new Exception($"SendGrid error: {response.StatusCode} - {body}");
+        }
     }
 }
