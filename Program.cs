@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -55,22 +56,53 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-var raw = builder.Configuration.GetConnectionString("DefaultConnection")
-          ?? builder.Configuration["DATABASE_URL"];
-
-if (string.IsNullOrWhiteSpace(raw))
-    throw new InvalidOperationException("Postgres connection string not set.");
-
-string connString = raw;
-if (raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
-    raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+string GetPgConnString(IConfiguration cfg)
 {
-    connString = ToNpgsqlConnectionString(raw);
+    var raw =
+        cfg.GetConnectionString("DefaultConnection")
+        ?? cfg["DATABASE_INTERNAL_URL"]
+        ?? cfg["DATABASE_URL"];
+
+    if (string.IsNullOrWhiteSpace(raw))
+        throw new InvalidOperationException("Postgres connection string not set.");
+
+    if (!(raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+          raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)))
+        return raw; // already key=value
+
+    var uri = new Uri(raw);
+    var userInfo = uri.UserInfo.Split(':', 2);
+    var user = Uri.UnescapeDataString(userInfo[0]);
+    var pass = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+    var db = uri.AbsolutePath.TrimStart('/');
+
+    var qs = uri.Query.TrimStart('?')
+        .Split('&', StringSplitOptions.RemoveEmptyEntries)
+        .Select(p => p.Split('=', 2))
+        .ToDictionary(a => a[0], a => a.Length > 1 ? a[1] : "", StringComparer.OrdinalIgnoreCase);
+
+    var b = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Username = user,
+        Password = pass,
+        Database = db
+    };
+
+    if (qs.TryGetValue("sslmode", out var ssl) && ssl.Equals("require", StringComparison.OrdinalIgnoreCase))
+    {
+        b.SslMode = SslMode.Require;
+    }
+
+    return b.ToString();
 }
 
 builder.Services.AddDbContext<CrowdedExamsDb>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var conn = GetPgConnString(builder.Configuration);
+    options.UseNpgsql(conn);
+});
 
 var app = builder.Build();
 
@@ -92,30 +124,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-static string ToNpgsqlConnectionString(string url)
-{
-    var uri = new Uri(url);
-    var userInfo = uri.UserInfo.Split(':', 2);
-    var username = Uri.UnescapeDataString(userInfo[0]);
-    var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
-
-    var db = uri.AbsolutePath.TrimStart('/');
-    var sslRequire = (uri.Query?.Contains("sslmode=require", StringComparison.OrdinalIgnoreCase) ?? false);
-
-    var sb = new Npgsql.NpgsqlConnectionStringBuilder
-    {
-        Host = uri.Host,
-        Port = uri.Port > 0 ? uri.Port : 5432,
-        Username = username,
-        Password = password,
-        Database = db
-    };
-
-    if (sslRequire)
-    {
-        sb.SslMode = Npgsql.SslMode.Require;
-    }
-
-    return sb.ToString();
-}
