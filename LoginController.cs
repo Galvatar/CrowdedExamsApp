@@ -119,7 +119,7 @@ public class LoginController : ControllerBase
         {
             HttpOnly = true,
             Secure = true,
-            SameSite = SameSiteMode.Lax,
+            SameSite = SameSiteMode.None
         };
         if (partialUser.RememberMe)
         {
