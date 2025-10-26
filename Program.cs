@@ -61,6 +61,12 @@ builder.Services.AddDbContext<CrowdedExamsDb>(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<CrowdedExamsDb>();
+    db.Database.Migrate(); // or: await db.Database.MigrateAsync();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
