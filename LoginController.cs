@@ -93,7 +93,7 @@ public class LoginController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> getAllInstitutions()
     {
-        var items = _database.Institutions.ToListAsync();
+        var items = await _database.Institutions.ToListAsync();
         return Ok(items);
     }
 
