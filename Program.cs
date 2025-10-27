@@ -19,7 +19,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowMyFrontend",
         policy =>
         {
-            policy.WithOrigins("https://localhost:3000")
+            policy.WithOrigins("https://localhost:3000", "https://crowded-exams.onrender.com")
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .WithExposedHeaders("Authorization")

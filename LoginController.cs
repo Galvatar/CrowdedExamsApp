@@ -154,7 +154,7 @@ public class LoginController : ControllerBase
         _database.Users.Add(user);
         await _database.SaveChangesAsync();
 
-        var verificationUrl = $"https://localhost:3000/?token={user.EmailVerificationToken}";
+        var verificationUrl = $"https://crowded-exams.onrender.com/?token={user.EmailVerificationToken}";
         var emailHtml = $@"
             <html>
             <body style='font-family: Arial, sans-serif;'>
