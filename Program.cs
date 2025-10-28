@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Npgsql;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -110,7 +111,14 @@ builder.Services.AddDbContext<CrowdedExamsDb>(options =>
     options.UseNpgsql(conn);
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
+
 var app = builder.Build();
+app.UseForwardedHeaders();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -124,6 +132,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHttpsRedirection();
 app.UseCors("AllowMyFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
