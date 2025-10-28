@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Npgsql;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -28,37 +29,47 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddSingleton<IEmailSender, SendGridEmailSender>();
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+{
+    // The default scheme for authenticating API requests is JWT
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddCookie(options => // Add a cookie handler for the external login state
+{
+    options.Cookie.Name = "CrowdedExams.ExternalLogin";
+})
+.AddJwtBearer(o =>
+{
+    // Your existing JWT bearer options are perfect, leave them as is
+    o.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"])),
-
-            ValidateIssuer = true,
-            ValidIssuer = config["Jwt:Issuer"],
-
-            ValidateAudience = true,
-            ValidAudience = config["Jwt:Audience"],
-
-            ValidateLifetime = true,
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                context.Token = context.Request.Cookies["accessToken"];
-                return Task.CompletedTask;
-            }
-        };
-    })
-    .AddGoogle(googleOptions =>
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true
+    };
+    o.Events = new JwtBearerEvents
     {
-        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        googleOptions.CallbackPath = "/api/login/google-callback";
-    });
+        OnMessageReceived = context =>
+        {
+            context.Token = context.Request.Cookies["accessToken"];
+            return Task.CompletedTask;
+        }
+    };
+})
+.AddGoogle(googleOptions =>
+{
+    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    googleOptions.CallbackPath = "/api/login/google-callback";
+
+    // This is the crucial part: tell Google to use the cookie handler for its temporary sign-in
+    googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
