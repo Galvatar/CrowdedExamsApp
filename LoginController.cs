@@ -233,6 +233,9 @@ public class LoginController : ControllerBase
                 if (institution != null)
                 {
                     institutionName = institution.Name;
+                } else
+                {
+                    return Unauthorized("No valid institution");
                 }
             }
             user = new User
