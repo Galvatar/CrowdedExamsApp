@@ -1,18 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
 using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using System.Threading.Tasks;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 using UglyToad.PdfPig;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 
 [ApiController]
 [Route("api/exams")]

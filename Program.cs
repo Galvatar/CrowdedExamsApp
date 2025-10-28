@@ -51,6 +51,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return Task.CompletedTask;
             }
         };
+    })
+    .AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        googleOptions.CallbackPath = "/api/login/google-callback";
     });
 
 builder.Services.AddControllers();
@@ -121,6 +127,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowMyFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TokenRefreshMiddleware>();
 app.MapControllers();
 
 app.Run();

@@ -1,14 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "TKf9j8YpwJo=",
+  "dgSpecHash": "GSIGegyslgo=",
   "success": true,
   "projectFilePath": "/Users/galvatar/Documents/UniYear3/Personal projects/crowded-exams-app/netventure.csproj",
   "expectedPackageFiles": [
     "/Users/galvatar/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/Users/galvatar/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",
+    "/Users/galvatar/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
     "/Users/galvatar/.nuget/packages/bouncycastle.cryptography/2.6.1/bouncycastle.cryptography.2.6.1.nupkg.sha512",
     "/Users/galvatar/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/galvatar/.nuget/packages/mailkit/4.14.1/mailkit.4.14.1.nupkg.sha512",
+    "/Users/galvatar/.nuget/packages/microsoft.aspnetcore.authentication.google/9.0.10/microsoft.aspnetcore.authentication.google.9.0.10.nupkg.sha512",
     "/Users/galvatar/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/8.0.20/microsoft.aspnetcore.authentication.jwtbearer.8.0.20.nupkg.sha512",
     "/Users/galvatar/.nuget/packages/microsoft.aspnetcore.openapi/9.0.10/microsoft.aspnetcore.openapi.9.0.10.nupkg.sha512",
     "/Users/galvatar/.nuget/packages/microsoft.bcl.asyncinterfaces/7.0.0/microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",

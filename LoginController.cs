@@ -4,6 +4,8 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 
 
 [ApiController]
@@ -54,18 +56,14 @@ public class LoginController : ControllerBase
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var expires = DateTime.UtcNow.AddDays(30);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
             SigningCredentials = creds,
             Issuer = _configuration["Jwt:Issuer"],
-            Audience = _configuration["Jwt:Audience"]
+            Audience = _configuration["Jwt:Audience"],
+            Expires = doesExpire ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddHours(2)
         };
-        if (doesExpire)
-        {
-            tokenDescriptor.Expires = expires;
-        }
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
@@ -105,9 +103,13 @@ public class LoginController : ControllerBase
         {
             return BadRequest("Missing email or password");
         }
-        var user = await _database.Users.FirstOrDefaultAsync(t => t.Email == partialUser.Email.ToString() && t.Password == partialUser.Password.ToString());
-        if (user == null)
+        var user = await _database.Users.FirstOrDefaultAsync(t => t.Email == partialUser.Email.ToString());
+        if (user == null || !BCrypt.Net.BCrypt.Verify(partialUser.Password, user.Password))
         {
+            if (user.Password == null)
+            {
+                return Unauthorized("Use google signin");
+            }
             return Unauthorized("Wrong password or email");
         }
         if (!user.isEmailVerified)
@@ -124,6 +126,9 @@ public class LoginController : ControllerBase
         if (partialUser.RememberMe)
         {
             cookieOptions.Expires = DateTime.UtcNow.AddDays(30);
+        } else
+        {
+            cookieOptions.Expires = DateTime.UtcNow.AddHours(2);
         }
         Response.Cookies.Append("accessToken", token, cookieOptions);
 
@@ -150,6 +155,8 @@ public class LoginController : ControllerBase
         user.Role = "Student";
         user.EmailVerificationToken = Guid.NewGuid().ToString();
         user.VerificationTokenExpires = DateTime.UtcNow.AddHours(1);
+
+        user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
         _database.Users.Add(user);
         await _database.SaveChangesAsync();
@@ -184,5 +191,75 @@ public class LoginController : ControllerBase
         );
 
         return NoContent();
+    }
+
+    [HttpGet("google-login")]
+    public IActionResult GoogleLogin()
+    {
+        var properties = new AuthenticationProperties { RedirectUri = "/" };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    [HttpGet("google-callback")]
+    public async Task<IActionResult> GoogleCallback()
+    {
+        var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+        if (result?.Succeeded != true)
+        {
+            return Unauthorized("Authentication failed");
+        }
+
+        var claims = result.Principal.Identities.FirstOrDefault()?.Claims;
+        var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var firstName = claims?.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value;
+        var lastName = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
+        var hostedDomain = claims?.FirstOrDefault(c => c.Type == "hd")?.Value;
+
+        if (string.IsNullOrEmpty(email))
+        {
+            return Unauthorized("no email");
+        }
+
+        // Check if the user already exists in your database
+        var user = await _database.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+        {
+            // User doesn't exist, create a new one
+            string institutionName = "Unknown";
+            if (!string.IsNullOrEmpty(hostedDomain))
+            {
+                var institution = await _database.Institutions.FirstOrDefaultAsync(i => i.Email == hostedDomain);
+                if (institution != null)
+                {
+                    institutionName = institution.Name;
+                }
+            }
+            user = new User
+            {
+                Email = email,
+                FirstName = firstName ?? "",
+                LastName = lastName ?? "",
+                isEmailVerified = true,
+                Role = "Student",
+                Institution = institutionName
+            };
+            _database.Users.Add(user);
+            await _database.SaveChangesAsync();
+        }
+
+        // At this point, you have a user. Generate your app's JWT and set the cookie.
+        var token = GenerateJwtToken(user, true); // Log them in with "Remember Me"
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(30)
+        };
+        Response.Cookies.Append("accessToken", token, cookieOptions);
+
+        // Redirect the user back to your frontend application
+        return Redirect("https://crowded-exams.onrender.com/"); // Or a dashboard page
     }
 }
