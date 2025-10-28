@@ -6,6 +6,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
+using SendGrid.Helpers.Errors.Model;
 
 
 [ApiController]
@@ -28,6 +30,7 @@ public class LoginController : ControllerBase
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Institution { get; set; } = string.Empty;
+        public bool Moderator { get; set; } = false;
 
     }
 
@@ -104,12 +107,16 @@ public class LoginController : ControllerBase
             return BadRequest("Missing email or password");
         }
         var user = await _database.Users.FirstOrDefaultAsync(t => t.Email == partialUser.Email.ToString());
-        if (user == null || !BCrypt.Net.BCrypt.Verify(partialUser.Password, user.Password))
+        if (user == null)
         {
-            if (user.Password == null)
-            {
-                return Unauthorized("Use google signin");
-            }
+            return Unauthorized("Wrong password or email");
+        }
+        if (user.Password == null)
+        {
+            return Unauthorized("Use google signin");
+        }
+        if (!BCrypt.Net.BCrypt.Verify(partialUser.Password, user.Password))
+        {
             return Unauthorized("Wrong password or email");
         }
         if (!user.isEmailVerified)
@@ -126,7 +133,8 @@ public class LoginController : ControllerBase
         if (partialUser.RememberMe)
         {
             cookieOptions.Expires = DateTime.UtcNow.AddDays(30);
-        } else
+        }
+        else
         {
             cookieOptions.Expires = DateTime.UtcNow.AddHours(2);
         }
@@ -137,6 +145,33 @@ public class LoginController : ControllerBase
         responsePayload.LastName = user.LastName;
         responsePayload.Institution = user.Institution;
         return Ok(responsePayload);
+    }
+
+    [HttpGet("user-info")]
+    [Authorize]
+    public async Task<IActionResult> getUserInformation()
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized("Invalid user identifier.");
+        }
+
+        var user = await _database.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized("No valid user");
+        }
+
+        var payload = new
+        {
+            user.FirstName,
+            user.LastName,
+            user.Institution,
+            Moderator = user.Role == "Moderator"
+        };
+
+        return Ok(payload);
     }
 
     [HttpPut]
