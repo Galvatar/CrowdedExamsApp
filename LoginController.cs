@@ -260,18 +260,16 @@ public class LoginController : ControllerBase
 
         if (user == null)
         {
-            // User doesn't exist, create a new one
             string institutionName = "Unknown";
-            if (!string.IsNullOrEmpty(hostedDomain))
+            if (string.IsNullOrEmpty(hostedDomain))
             {
-                var institution = await _database.Institutions.FirstOrDefaultAsync(i => i.Email == hostedDomain);
-                if (institution != null)
-                {
-                    institutionName = institution.Name;
-                } else
-                {
-                    return Unauthorized("No valid institution");
-                }
+                return Unauthorized("Account creation is only allowed with a valid institution email.");
+            }
+            Console.WriteLine(hostedDomain);
+            var institution = await _database.Institutions.FirstOrDefaultAsync(i => i.Email == hostedDomain);
+            if (institution == null)
+            {
+                return Unauthorized("Your institution is not yet supported. Please contact us to add it.");
             }
             user = new User
             {
@@ -280,7 +278,7 @@ public class LoginController : ControllerBase
                 LastName = lastName ?? "",
                 isEmailVerified = true,
                 Role = "Student",
-                Institution = institutionName
+                Institution = institution.Name
             };
             _database.Users.Add(user);
             await _database.SaveChangesAsync();
