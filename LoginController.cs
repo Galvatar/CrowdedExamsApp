@@ -238,10 +238,11 @@ public class LoginController : ControllerBase
     [HttpGet("google-callback")]
     public async Task<IActionResult> GoogleCallback()
     {
+        var frontendLoginUrl = "https://crowded-exams.onrender.com/";
         var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
         if (result?.Succeeded != true)
         {
-            return Unauthorized("Authentication failed");
+            return Redirect($"{frontendLoginUrl}?error=google-auth-failed");
         }
 
         var claims = result.Principal.Identities.FirstOrDefault()?.Claims;
@@ -252,10 +253,9 @@ public class LoginController : ControllerBase
 
         if (string.IsNullOrEmpty(email))
         {
-            return Unauthorized("no email");
+            return Redirect($"{frontendLoginUrl}?error=email-not-found");
         }
 
-        // Check if the user already exists in your database
         var user = await _database.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
@@ -263,13 +263,12 @@ public class LoginController : ControllerBase
             string institutionName = "Unknown";
             if (string.IsNullOrEmpty(hostedDomain))
             {
-                return Unauthorized("Account creation is only allowed with a valid institution email.");
+                return Redirect($"{frontendLoginUrl}?error=personal-email-not-allowed");
             }
-            Console.WriteLine(hostedDomain);
             var institution = await _database.Institutions.FirstOrDefaultAsync(i => i.Email == hostedDomain);
             if (institution == null)
             {
-                return Unauthorized("Your institution is not yet supported. Please contact us to add it.");
+                return Redirect($"{frontendLoginUrl}?error=institution-not-supported");
             }
             user = new User
             {
@@ -284,8 +283,7 @@ public class LoginController : ControllerBase
             await _database.SaveChangesAsync();
         }
 
-        // At this point, you have a user. Generate your app's JWT and set the cookie.
-        var token = GenerateJwtToken(user, true); // Log them in with "Remember Me"
+        var token = GenerateJwtToken(user, true);
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
@@ -295,7 +293,6 @@ public class LoginController : ControllerBase
         };
         Response.Cookies.Append("accessToken", token, cookieOptions);
 
-        // Redirect the user back to your frontend application
-        return NoContent(); // Or a dashboard page
+        return NoContent();
     }
 }
