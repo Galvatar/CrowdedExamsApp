@@ -38,6 +38,8 @@ builder.Services.AddAuthentication(options =>
 .AddCookie(options => // Add a cookie handler for the external login state
 {
     options.Cookie.Name = "CrowdedExams.ExternalLogin";
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 })
 .AddJwtBearer(o =>
 {
