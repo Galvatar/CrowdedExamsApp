@@ -238,6 +238,7 @@ public class LoginController : ControllerBase
     [HttpGet("google-callback")]
     public async Task<IActionResult> GoogleCallback()
     {
+        Console.WriteLine("Entered");
         var frontendLoginUrl = "https://crowded-exams.onrender.com/";
         var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
         if (result?.Succeeded != true)
@@ -255,11 +256,13 @@ public class LoginController : ControllerBase
         {
             return Redirect($"{frontendLoginUrl}?error=email-not-found");
         }
+        Console.WriteLine(email);
 
         var user = await _database.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
         {
+            Console.WriteLine(hostedDomain);
             string institutionName = "Unknown";
             if (string.IsNullOrEmpty(hostedDomain))
             {
@@ -293,6 +296,6 @@ public class LoginController : ControllerBase
         };
         Response.Cookies.Append("accessToken", token, cookieOptions);
 
-        return NoContent();
+        return Redirect($"{frontendLoginUrl}?error=done");
     }
 }
