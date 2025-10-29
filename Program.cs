@@ -78,7 +78,7 @@ builder.Services.AddAuthentication(options =>
     googleOptions.CallbackPath = "/signin-google";
 
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
+    googleOptions.CorrelationCookie.SameSite = SameSiteMode.Lax;
     googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
 
     googleOptions.CorrelationCookie.HttpOnly = true;
