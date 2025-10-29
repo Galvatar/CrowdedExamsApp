@@ -83,15 +83,6 @@ builder.Services.AddAuthentication(options =>
 
     googleOptions.CorrelationCookie.HttpOnly = true;
     googleOptions.CorrelationCookie.Path = "/";
-
-    googleOptions.Events = new OAuthEvents
-    {
-        OnRedirectToAuthorizationEndpoint = context =>
-        {
-            Console.WriteLine($"Redirecting to Google with URI: {context.RedirectUri}");
-            return Task.CompletedTask;
-        }
-    };
 });
 
 builder.Services.AddControllers();
