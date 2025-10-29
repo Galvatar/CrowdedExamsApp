@@ -5,6 +5,7 @@ using System.Text;
 using Npgsql;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -123,6 +124,9 @@ builder.Services.AddDbContext<CrowdedExamsDb>(options =>
     var conn = GetPgConnString(builder.Configuration);
     options.UseNpgsql(conn);
 });
+
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<CrowdedExamsDb>();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {

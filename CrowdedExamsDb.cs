@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 
-public class CrowdedExamsDb : DbContext
+public class CrowdedExamsDb : DbContext, IDataProtectionKeyContext
 {
     public CrowdedExamsDb(DbContextOptions<CrowdedExamsDb> options) : base(options)
     {
@@ -12,4 +13,5 @@ public class CrowdedExamsDb : DbContext
     public DbSet<Solution> Solutions { get; set; }
     public DbSet<Reply> Replies { get; set; }
     public DbSet<UserVote> UserVotes { get; set; }
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 }
