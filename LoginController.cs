@@ -231,8 +231,7 @@ public class LoginController : ControllerBase
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
-        var redirectUri = Url.Action(nameof(GoogleCallback), "Login", values: null, protocol: Request.Scheme);
-        var properties = new AuthenticationProperties { RedirectUri = redirectUri };;
+        var properties = new AuthenticationProperties { RedirectUri = "https://crowded-exams.onrender.com" };
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
 
@@ -297,6 +296,6 @@ public class LoginController : ControllerBase
         };
         Response.Cookies.Append("accessToken", token, cookieOptions);
 
-        return Redirect($"{frontendLoginUrl}");
+        return Redirect($"{frontendLoginUrl}?error=done");
     }
 }

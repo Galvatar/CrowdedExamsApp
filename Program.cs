@@ -31,18 +31,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IEmailSender, SendGridEmailSender>();
 builder.Services.AddAuthentication(options =>
 {
+    // The default scheme for authenticating API requests is JWT
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
 .AddCookie(options => // Add a cookie handler for the external login state
 {
     options.Cookie.Name = "CrowdedExams.ExternalLogin";
-    options.Cookie.Path = "/";
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    options.Cookie.IsEssential = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
 })
 .AddJwtBearer(o =>
 {
@@ -70,12 +65,10 @@ builder.Services.AddAuthentication(options =>
 {
     googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    googleOptions.CallbackPath = "/signin-google";
-    googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    googleOptions.CallbackPath = "/api/login/google-callback";
 
-    googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
-    googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    googleOptions.CorrelationCookie.Path = "/";
+    // This is the crucial part: tell Google to use the cookie handler for its temporary sign-in
+    googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 });
 
 builder.Services.AddControllers();
