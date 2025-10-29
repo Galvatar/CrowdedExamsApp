@@ -231,7 +231,7 @@ public class LoginController : ControllerBase
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
-        return Challenge(GoogleDefaults.AuthenticationScheme);
+        return Challenge("https://crowdedexamsapi.onrender.com/api/login/google-callback", GoogleDefaults.AuthenticationScheme);
     }
 
     [HttpGet("google-callback")]
