@@ -162,6 +162,35 @@ public class ExamController : ControllerBase
         return Ok(contributions);
     }
 
+    [HttpDelete("contributions")]
+    public async Task<IActionResult> deleteContribution([FromBody] Contributions contribution)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized("Invalid user identifier.");
+        }
+
+        var user = await _database.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized("No valid user");
+        }
+
+        if (contribution.Type == "solution")
+        {
+            var solution = await _database.Solutions.FirstOrDefaultAsync(s => s.Id == contribution.Id);
+            if (solution != null) _database.Solutions.Remove(solution);
+        }
+        else
+        {
+            var reply = await _database.Replies.FirstOrDefaultAsync(r => r.Id == contribution.Id);
+            if (reply != null) _database.Replies.Remove(reply);
+        }
+        await _database.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpGet]
     public async Task<IActionResult> getAllExams()
     {
