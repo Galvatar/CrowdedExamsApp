@@ -231,8 +231,8 @@ public class LoginController : ControllerBase
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
-        var callbackUrl = Url.Action(nameof(GoogleCallback), "Login", values: null, protocol: Request.Scheme);
-        var properties = new AuthenticationProperties { RedirectUri = callbackUrl };
+        var redirectUri = Url.Action(nameof(GoogleCallback), "Login", values: null, protocol: Request.Scheme);
+        var properties = new AuthenticationProperties { RedirectUri = redirectUri };;
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
 

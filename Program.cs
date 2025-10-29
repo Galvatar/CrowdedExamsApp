@@ -70,7 +70,7 @@ builder.Services.AddAuthentication(options =>
 {
     googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    googleOptions.CallbackPath = "/api/login/google-callback";
+    googleOptions.CallbackPath = "/signin-google";
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 
     googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
