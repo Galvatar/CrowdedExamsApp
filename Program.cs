@@ -40,7 +40,7 @@ builder.Services.AddAuthentication(options =>
     options.Cookie.Name = "CrowdedExams.ExternalLogin";
     options.Cookie.Path = "/";
     options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     options.Cookie.IsEssential = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
 })
@@ -75,7 +75,7 @@ builder.Services.AddAuthentication(options =>
 
     googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
     googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-    googleOptions.CorrelationCookie.Name = "/";
+    googleOptions.CorrelationCookie.Path = "/";
 });
 
 builder.Services.AddControllers();
