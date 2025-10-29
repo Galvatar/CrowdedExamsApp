@@ -75,14 +75,6 @@ builder.Services.AddAuthentication(options =>
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
     googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
-    googleOptions.Events = new OAuthEvents
-    {
-        OnRedirectToAuthorizationEndpoint = context =>
-        {
-            Console.WriteLine($"Redirecting to Google with URI: {context.RedirectUri}");
-            return Task.CompletedTask;
-        }
-    };
 });
 
 builder.Services.AddControllers();
