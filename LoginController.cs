@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using SendGrid.Helpers.Errors.Model;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 
 [ApiController]
@@ -231,7 +232,11 @@ public class LoginController : ControllerBase
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
-        return Challenge("https://crowdedexamsapi.onrender.com/api/login/google-callback", GoogleDefaults.AuthenticationScheme);
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = Url.Action(nameof(GoogleCallback), "Login", values: null, protocol: Request.Scheme)
+        };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
 
     [HttpGet("google-callback")]
@@ -239,7 +244,7 @@ public class LoginController : ControllerBase
     {
         Console.WriteLine("Entered");
         var frontendLoginUrl = "https://crowded-exams.onrender.com/";
-        var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+        var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         if (result?.Succeeded != true)
         {
             return Redirect($"{frontendLoginUrl}?error=google-auth-failed");
