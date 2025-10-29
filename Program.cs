@@ -71,6 +71,8 @@ builder.Services.AddAuthentication(options =>
     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
     googleOptions.CallbackPath = "/api/login/google-callback";
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
+    googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
 builder.Services.AddControllers();
