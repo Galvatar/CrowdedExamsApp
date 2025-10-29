@@ -39,9 +39,15 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(options => // Add a cookie handler for the external login state
 {
-    options.Cookie.Name = "CrowdedExams.ExternalLogin";
-    options.Cookie.SameSite = SameSiteMode.None;
+    options.LoginPath = "/api/login";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.SlidingExpiration = true;
+    options.Cookie.Name = "AuthCookie";
+    options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.Path = "/";
+    options.Cookie.Domain = null;
 })
 .AddJwtBearer(o =>
 {
@@ -69,11 +75,23 @@ builder.Services.AddAuthentication(options =>
 {
     googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    googleOptions.CallbackPath = "/api/login/google-callback";
+    googleOptions.CallbackPath = "/signin-google";
 
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
     googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+
+    googleOptions.CorrelationCookie.HttpOnly = true;
+    googleOptions.CorrelationCookie.Path = "/";
+
+    googleOptions.Events = new OAuthEvents
+    {
+        OnRedirectToAuthorizationEndpoint = context =>
+        {
+            Console.WriteLine($"Redirecting to Google with URI: {context.RedirectUri}");
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddControllers();

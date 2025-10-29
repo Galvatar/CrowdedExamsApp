@@ -232,7 +232,11 @@ public class LoginController : ControllerBase
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
-        return Challenge(GoogleDefaults.AuthenticationScheme);
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = Url.Action(nameof(GoogleCallback), "Login", values: null, protocol: Request.Scheme)
+        };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
 
     [HttpGet("google-callback")]
