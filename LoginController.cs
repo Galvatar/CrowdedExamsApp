@@ -32,6 +32,7 @@ public class LoginController : ControllerBase
         public string LastName { get; set; } = string.Empty;
         public string Institution { get; set; } = string.Empty;
         public bool Moderator { get; set; } = false;
+        public string Email { get; set; } = string.Empty;
 
     }
 
@@ -169,7 +170,8 @@ public class LoginController : ControllerBase
             user.FirstName,
             user.LastName,
             user.Institution,
-            Moderator = user.Role == "Moderator"
+            Moderator = user.Role == "Moderator",
+            user.Email
         };
 
         return Ok(payload);
@@ -294,5 +296,25 @@ public class LoginController : ControllerBase
         Response.Cookies.Append("accessToken", token, cookieOptions);
 
         return Redirect($"{frontendLoginUrl}?error=done");
+    }
+    [HttpDelete("user")]
+    [Authorize]
+    public async Task<IActionResult> deleteUser()
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized("Invalid user identifier.");
+        }
+
+        var user = await _database.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized("No valid user");
+        }
+
+        _database.Users.Remove(user);
+        await _database.SaveChangesAsync();
+        return NoContent();
     }
 }

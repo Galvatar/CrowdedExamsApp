@@ -9,4 +9,5 @@ public class Reply
     public string User { get; set; } = string.Empty;
     public int UserId { get; set; }
     public string Description { get; set; } = string.Empty;
+    public DateTime createdTime { get; set; }
 }

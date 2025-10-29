@@ -56,8 +56,20 @@ public class ExamController : ControllerBase
         public string Vote { get; set; } = string.Empty;
     }
 
-    public class CommentDto {
+    public class CommentDto
+    {
         public string Text { get; set; } = string.Empty;
+    }
+
+    public class Contributions
+    {
+        public int Id { get; set; }
+        public string ExamTitle { get; set; } = string.Empty;
+        public int ExamId { get; set; }
+        public int QuestionNumber { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public int Votes { get; set; }
     }
 
     [HttpGet("create")]
@@ -83,9 +95,71 @@ public class ExamController : ControllerBase
             return Unauthorized("No valid user");
         }
         exam.Institution = user.Institution;
+        exam.createdTime = DateTime.UtcNow;
         await _database.Exams.AddAsync(exam);
         await _database.SaveChangesAsync();
         return Created();
+    }
+
+    [HttpGet("contributions")]
+    public async Task<IActionResult> getAllContributions()
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Unauthorized("Invalid user identifier.");
+        }
+
+        var user = await _database.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return Unauthorized("No valid user");
+        }
+        var contributions = new List<Contributions>();
+
+        // Map Solutions to Contributions
+        var solutions = await _database.Solutions
+            .Include(s => s.Question)
+                .ThenInclude(q => q.Exam)
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync();
+
+        foreach (var solution in solutions)
+        {
+            contributions.Add(new Contributions
+            {
+                Id = solution.Id,
+                ExamTitle = solution.Question.Exam.Name,
+                ExamId = solution.Question.ExamId,
+                QuestionNumber = solution.Question.Number,
+                Type = "Solution",
+                Text = solution.Description,
+                Votes = solution.UpVotes - solution.DownVotes
+            });
+        }
+
+        // Map Replies to Contributions
+        var replies = await _database.Replies
+            .Include(r => r.Solution)
+                .ThenInclude(s => s.Question)
+                    .ThenInclude(q => q.Exam)
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync();
+
+        foreach (var reply in replies)
+        {
+            contributions.Add(new Contributions
+            {
+                Id = reply.Id,
+                ExamTitle = reply.Solution.Question.Exam.Name,
+                ExamId = reply.Solution.Question.ExamId,
+                QuestionNumber = reply.Solution.Question.Number,
+                Type = "Reply",
+                Text = reply.Description,
+            });
+        }
+
+        return Ok(contributions);
     }
 
     [HttpGet]
@@ -182,7 +256,8 @@ public class ExamController : ControllerBase
             Description = solution.Description,
             UpVotes = 0,
             DownVotes = 0,
-            Replies = new List<Reply>()
+            Replies = new List<Reply>(),
+            createdTime = DateTime.UtcNow
         };
         _database.Solutions.Add(newSolution);
         await _database.SaveChangesAsync();
@@ -216,7 +291,8 @@ public class ExamController : ControllerBase
             SolutionId = solution.Id,
             User = user.FirstName + " " + user.LastName,
             UserId = user.Id,
-            Description = text.Text
+            Description = text.Text,
+            createdTime = DateTime.UtcNow
         };
         solution.Replies.Add(newReply);
         await _database.SaveChangesAsync();
@@ -267,9 +343,10 @@ public class ExamController : ControllerBase
         }
         return Ok(llmResponse);
     }
-    
+
     [HttpPatch("questions/{solutionId}/solutions")]
-    public async Task<IActionResult> newVotes(int solutionId, [FromBody] VoteUpdateDto voteUpdate) {
+    public async Task<IActionResult> newVotes(int solutionId, [FromBody] VoteUpdateDto voteUpdate)
+    {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var user = await _database.Users.FirstOrDefaultAsync(t => t.Id == int.Parse(userId));
         if (user == null)
@@ -290,19 +367,25 @@ public class ExamController : ControllerBase
                 SolutionId = solutionId,
                 Vote = voteUpdate.Vote
             };
-            if (voteUpdate.Vote == "up") {
+            if (voteUpdate.Vote == "up")
+            {
                 curSolution.UpVotes++;
-            } else {
+            }
+            else
+            {
                 curSolution.DownVotes++;
             }
             user.Votes.Add(newVote);
         }
         else
         {
-            if (curVote.Vote == "down" && voteUpdate.Vote == "up") {
+            if (curVote.Vote == "down" && voteUpdate.Vote == "up")
+            {
                 curSolution.UpVotes++;
                 curSolution.DownVotes--;
-            } else if (curVote.Vote == "up" && voteUpdate.Vote == "down") {
+            }
+            else if (curVote.Vote == "up" && voteUpdate.Vote == "down")
+            {
                 curSolution.UpVotes--;
                 curSolution.DownVotes++;
             }

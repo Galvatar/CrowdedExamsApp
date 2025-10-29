@@ -12,4 +12,5 @@ public class Solution
     public int UpVotes { get; set; }
     public int DownVotes { get; set; }
     public List<Reply> Replies { get; set; } = new List<Reply>();
+    public DateTime createdTime { get; set; }
 }

@@ -6,4 +6,5 @@ public class Exam
     public string Difficulty { get; set; } = string.Empty;
     public string Institution { get; set; } = string.Empty;
     public List<Question> Questions { get; set; } = new List<Question>();
+    public DateTime createdTime { get; set; }
 }
