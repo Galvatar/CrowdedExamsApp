@@ -126,7 +126,8 @@ builder.Services.AddDbContext<CrowdedExamsDb>(options =>
 });
 
 builder.Services.AddDataProtection()
-    .PersistKeysToDbContext<CrowdedExamsDb>();
+    .PersistKeysToDbContext<CrowdedExamsDb>()
+    .SetApplicationName("CrowdedExamsShared");
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
