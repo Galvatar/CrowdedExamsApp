@@ -38,8 +38,9 @@ builder.Services.AddAuthentication(options =>
 .AddCookie(options => // Add a cookie handler for the external login state
 {
     options.Cookie.Name = "CrowdedExams.ExternalLogin";
+    options.Cookie.Path = "/";
     options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.IsEssential = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
 })
@@ -71,8 +72,10 @@ builder.Services.AddAuthentication(options =>
     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
     googleOptions.CallbackPath = "/api/login/google-callback";
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+
     googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
     googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    googleOptions.CorrelationCookie.Name = "/";
 });
 
 builder.Services.AddControllers();
