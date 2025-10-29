@@ -231,8 +231,7 @@ public class LoginController : ControllerBase
     [HttpGet("google-login")]
     public IActionResult GoogleLogin()
     {
-        var properties = new AuthenticationProperties { RedirectUri = "https://crowded-exams.onrender.com" };
-        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        return Challenge(GoogleDefaults.AuthenticationScheme);
     }
 
     [HttpGet("google-callback")]
