@@ -129,14 +129,18 @@ builder.Services.AddDataProtection()
     .PersistKeysToDbContext<CrowdedExamsDb>()
     .SetApplicationName("CrowdedExamsShared");
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
+var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
-    options.ForwardedHeaders =
-        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-});
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+
+// These lines are ESSENTIAL for trusting the Render proxy
+forwardedHeadersOptions.KnownProxies.Clear();
+forwardedHeadersOptions.KnownNetworks.Clear();
 
 var app = builder.Build();
-app.UseForwardedHeaders();
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 using (var scope = app.Services.CreateScope())
 {
@@ -150,7 +154,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseCors("AllowMyFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
