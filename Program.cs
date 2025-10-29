@@ -71,7 +71,6 @@ builder.Services.AddAuthentication(options =>
     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
     googleOptions.CallbackPath = "/api/login/google-callback";
 
-    // This is the crucial part: tell Google to use the cookie handler for its temporary sign-in
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
     googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
