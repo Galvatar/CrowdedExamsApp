@@ -72,6 +72,8 @@ builder.Services.AddAuthentication(options =>
 
     // This is the crucial part: tell Google to use the cookie handler for its temporary sign-in
     googleOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    googleOptions.CorrelationCookie.SameSite = SameSiteMode.None;
+    googleOptions.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 builder.Services.AddControllers();
@@ -134,7 +136,6 @@ var forwardedHeadersOptions = new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 };
 
-// These lines are ESSENTIAL for trusting the Render proxy
 forwardedHeadersOptions.KnownProxies.Clear();
 forwardedHeadersOptions.KnownNetworks.Clear();
 

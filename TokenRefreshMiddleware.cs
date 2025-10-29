@@ -28,7 +28,7 @@ public class TokenRefreshMiddleware
             if (expClaim == null) return;
 
             var expirationTime = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expClaim.Value)).UtcDateTime;
-            var refreshThreshold = DateTime.UtcNow.AddMinutes(30); // Refresh if token expires in the next 30 mins
+            var refreshThreshold = DateTime.UtcNow.AddMinutes(30);
 
             if (expirationTime < refreshThreshold)
             {
